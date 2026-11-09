@@ -25,19 +25,18 @@ public class LinkedListView extends VBox {
     private final TextArea historyArea = new TextArea();
 
     private int attemptNumber;
+    private final Ui.Stats stats = new Ui.Stats("COUNTED OPS", "RUN TIME", "ITEMS", "ATTEMPT");
 
     public LinkedListView(Runnable onBack) {
-        setPadding(new Insets(20));
-        setSpacing(12);
-        setStyle("-fx-background-color: #f1f5f9;");
+        setPadding(new Insets(0));
+        setSpacing(0);
+
 
         Button back = new Button("Back to Home");
         back.setOnAction(event -> onBack.run());
 
         Label title = new Label("Singly Linked List Explorer");
-        title.setStyle(
-            "-fx-font-size: 26px; -fx-font-weight: bold;"
-        );
+
 
         inputField.setPromptText(
             "Enter a whole number, then choose an operation"
@@ -56,7 +55,9 @@ public class LinkedListView extends VBox {
         delete.setOnAction(event -> perform("Delete First Match"));
 
         Button reset = new Button("Reset List");
-        reset.setOnAction(event -> resetList());
+        reset.setOnAction(event -> {
+            if (list.isEmpty() && historyArea.getText().isEmpty() || Ui.confirmReset(this, "list")) resetList();
+        });
 
         javafx.scene.layout.FlowPane controls =
             new javafx.scene.layout.FlowPane(10, 10);
@@ -68,11 +69,11 @@ public class LinkedListView extends VBox {
         status.setWrapText(true);
         state.setWrapText(true);
         metrics.setWrapText(true);
-        state.setStyle("-fx-font-weight: bold;");
+
 
         nodeDisplay.setAlignment(Pos.CENTER_LEFT);
         nodeDisplay.setPadding(new Insets(15));
-        nodeDisplay.setStyle("-fx-background-color: #e2e8f0;");
+
 
         ScrollPane horizontalScroll = new ScrollPane(nodeDisplay);
         horizontalScroll.setFitToHeight(true);
@@ -90,63 +91,37 @@ public class LinkedListView extends VBox {
         historyArea.setWrapText(true);
         historyArea.setPrefRowCount(5);
 
-        VBox content = new VBox(
-            14,
-            text(
-                "Each node stores a value and a next reference. " +
-                "Head points to the first node; the last node points to null."
-            ),
-            inputField,
-            controls,
-            status,
-            state,
-            horizontalScroll,
-            text(
-                "Scroll horizontally to see longer lists. Indexes show " +
-                "traversal positions, not memory addresses."
-            ),
-            text("Latest operation steps"),
-            stepsArea,
-            metrics,
-            text("Operation history"),
-            historyArea,
-            text(
-                "Complexity for this implementation:\n" +
-                "Insert First: O(1).\n" +
-                "Insert Last: O(n), because we traverse from head.\n" +
-                "Search and Delete First Match: best O(1), worst O(n).\n" +
-                "List storage: O(n). Display snapshot: O(n) extra space."
-            ),
-            text(
-                "Counting model: nodes visited + structural link writes. " +
-                "A structural link write changes head or a node's next. " +
-                "Local pointer movements, size updates, boundary checks " +
-                "and default node initialization are excluded."
-            ),
-            text(
-                "Timing includes the operation and explanation recording. " +
-                "It excludes input parsing, the display snapshot and rendering. " +
-                "Do not compare this directly with the stack/queue timings, " +
-                "which exclude explanation recording."
-            ),
-            text(
-                "Duplicates are allowed. Search returns the first match. " +
-                "Delete removes only the first match.\n" +
-                "The 50-node limit is a visualization choice, not an " +
-                "inherent linked-list limit.\n" +
-                "Resetting or reopening this screen starts an empty list."
-            )
+
+        Ui.primary(insertFirst); Ui.danger(reset);
+        insertFirst.setId("insert-first"); insertLast.setId("insert-last");
+        search.setId("search"); delete.setId("delete"); reset.setId("reset");
+        state.getStyleClass().add("state-badge");
+        nodeDisplay.getStyleClass().add("visual-canvas");
+        horizontalScroll.getStyleClass().add("node-scroll");
+        VBox content = new VBox(18,
+            Ui.heading("DATA STRUCTURES / LINKED LIST", "Linked List Explorer", "Follow the references. See how nodes connect, change and disappear."),
+            Ui.card("Try an operation", Ui.field("Value to insert, search or delete", inputField), controls, status),
+            Ui.card("Your linked nodes", state, horizontalScroll,
+                Ui.label("HEAD points to the first node. The last node points to null. Scroll sideways for longer lists.", "legend")),
+            Ui.card("Latest operation", stats, stepsArea),
+            Ui.details("Operation history", historyArea),
+            Ui.details("Complexity & measurement notes", metrics,
+                text("Insert First: O(1). Insert Last: O(n), with no tail reference. Search/Delete: best O(1), worst O(n). Nodes and display snapshot each use O(n) space."),
+                text("Count = nodes visited + structural link writes (head or next). Local pointer movements, size updates, boundary checks and default node initialization are excluded."),
+                text("Time includes the operation and explanation recording; excludes parsing, snapshot creation and rendering. It differs from stack/queue timing."),
+                text("Duplicates are allowed. Search/Delete use the first match. Limit: 50 nodes for visualization. Switching labs preserves the list; reset or closing the app clears it."))
         );
 
-        content.setPadding(new Insets(20));
-        content.setStyle("-fx-background-color: white;");
+        getStyleClass().add("lab-page");
+        inputField.setId("input-field");
+        status.setId("status");
+        Ui.status(status, "neutral");
+        title.getStyleClass().add("page-title");
 
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.setFitToWidth(true);
-        scroll.setMinHeight(0);
-        VBox.setVgrow(scroll, Priority.ALWAYS);
+        content.getStyleClass().add("page-content");
+        ScrollPane scroll = Ui.scroll(content);
+        getChildren().add(scroll);
 
-        getChildren().addAll(back, title, scroll);
 
         resetList();
     }
@@ -163,7 +138,7 @@ public class LinkedListView extends VBox {
         try {
             value = Integer.parseInt(inputField.getText().trim());
         } catch (NumberFormatException exception) {
-            status.setStyle("-fx-text-fill: #b91c1c;");
+            Ui.status(status, "error");
             status.setText(
                 "Enter a whole number between -2147483648 and 2147483647."
             );
@@ -171,7 +146,8 @@ public class LinkedListView extends VBox {
             stepsArea.setText(
                 "Input validation failed. No list operation was attempted."
             );
-            metrics.setText("No operation measured.");
+            stats.clear();
+        metrics.setText("No operation measured.");
             return;
         }
 
@@ -199,12 +175,10 @@ public class LinkedListView extends VBox {
         }
 
         attemptNumber++;
+        stats.set(Integer.toString(operation.getCountedOperations()), Ui.time(operation.elapsedNanoseconds),
+            Integer.toString(list.size()), Integer.toString(attemptNumber));
 
-        status.setStyle(
-            operation.successful
-                ? "-fx-text-fill: #15803d;"
-                : "-fx-text-fill: #b91c1c;"
-        );
+        Ui.status(status, operation.successful ? "success" : "error");
         status.setText(operation.message);
 
         stepsArea.setText(operation.steps);
@@ -247,14 +221,7 @@ public class LinkedListView extends VBox {
             node.setAlignment(Pos.CENTER);
             node.setMinSize(110, 50);
             node.setPadding(new Insets(10));
-            node.setStyle(
-                "-fx-background-color: " +
-                (index == 0 ? "#c2410c" : "#1d4ed8") + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 16px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;"
-            );
+            node.getStyleClass().addAll("value-box", index == 0 ? "active-value" : "ordinary");
 
             VBox item = new VBox(
                 5, node, new Label("index " + index)
@@ -274,9 +241,10 @@ public class LinkedListView extends VBox {
         attemptNumber = 0;
 
         inputField.clear();
-        status.setStyle("-fx-text-fill: #475569;");
+        Ui.status(status, "neutral");
         status.setText("List ready. Enter a number and choose an operation.");
         stepsArea.setText("Operation steps will appear here.");
+        stats.clear();
         metrics.setText("No operation measured.");
         historyArea.clear();
 

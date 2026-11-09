@@ -27,19 +27,18 @@ public class StackView extends VBox {
     private final TextArea historyArea = new TextArea();
 
     private int attemptNumber;
+    private final Ui.Stats stats = new Ui.Stats("COUNTED OPS", "RUN TIME", "ITEMS", "ATTEMPT");
 
     public StackView(Runnable onBack) {
-        setSpacing(12);
-        setPadding(new Insets(20));
-        setStyle("-fx-background-color: #f1f5f9;");
+        setSpacing(0);
+        setPadding(new Insets(0));
+
 
         Button back = new Button("Back to Home");
         back.setOnAction(event -> onBack.run());
 
         Label title = new Label("Stack Explorer");
-        title.setStyle(
-            "-fx-font-size: 26px; -fx-font-weight: bold;"
-        );
+
 
         Label introduction = text(
             "Last In, First Out: add and remove items at the top.\n" +
@@ -59,7 +58,9 @@ public class StackView extends VBox {
         peek.setOnAction(event -> displayOperation("Peek", stack.peek()));
 
         Button reset = new Button("Reset Stack");
-        reset.setOnAction(event -> resetStack());
+        reset.setOnAction(event -> {
+            if (stack.isEmpty() && historyArea.getText().isEmpty() || Ui.confirmReset(this, "stack")) resetStack();
+        });
 
         FlowPane controls = new FlowPane(10, 10);
         controls.getChildren().addAll(push, pop, peek, reset);
@@ -68,14 +69,10 @@ public class StackView extends VBox {
         state.setWrapText(true);
         metrics.setWrapText(true);
 
-        state.setStyle("-fx-font-weight: bold;");
 
         stackDisplay.setAlignment(Pos.TOP_CENTER);
         stackDisplay.setPadding(new Insets(15));
-        stackDisplay.setStyle(
-            "-fx-background-color: #e2e8f0;" +
-            "-fx-background-radius: 10;"
-        );
+
 
         stepsArea.setEditable(false);
         stepsArea.setWrapText(true);
@@ -85,49 +82,38 @@ public class StackView extends VBox {
         historyArea.setWrapText(true);
         historyArea.setPrefRowCount(5);
 
-        VBox content = new VBox(
-            14,
-            introduction,
-            inputField,
-            controls,
-            status,
-            state,
-            stackDisplay,
-            text("Latest operation steps"),
-            stepsArea,
-            metrics,
-            text("Operation history"),
-            historyArea,
-            text(
-                "Complexity: Push O(1), Pop O(1), Peek O(1).\n" +
-                "Storage: O(capacity). Rendering the active stack takes " +
-                "O(n) and is separate from the stack operation."
-            ),
-            text(
-                "Counting model: boundary checks + array reads + " +
-                "array writes + top-index updates. Local assignments, " +
-                "return handling and display work are excluded."
-            ),
-            text(
-                "Time measures the boundary check and core stack action. " +
-                "Input parsing, explanation creation and drawing are excluded. " +
-                "These tiny timings vary and are not reliable benchmarks."
-            ),
-            text(
-                "Leaving this screen and reopening it starts a new empty " +
-                "stack. Reset Stack also clears the stack and history."
-            )
+
+        Ui.primary(push); Ui.danger(reset);
+        push.setId("push"); pop.setId("pop"); peek.setId("peek"); reset.setId("reset");
+        state.getStyleClass().add("state-badge");
+        stackDisplay.getStyleClass().add("visual-canvas");
+        stackDisplay.setMaxWidth(520);
+        stackDisplay.setMinHeight(100);
+        stepsArea.setAccessibleText("Latest stack operation steps");
+        VBox content = new VBox(18,
+            Ui.heading("DATA STRUCTURES / STACK", "Stack Explorer", "Last in, first out. Add to the top, remove from the top."),
+            Ui.card("Try an operation", Ui.field("Value to push", inputField), controls, status),
+            Ui.card("Your stack", state, stackDisplay,
+                Ui.label("Amber marks TOP. Empty/full operations remain available so you can explore boundary cases.", "legend")),
+            Ui.card("Latest operation", stats, stepsArea),
+            Ui.details("Operation history", historyArea),
+            Ui.details("Complexity & measurement notes", metrics,
+                text("Push, Pop and Peek: O(1). Storage: O(capacity). Rendering is separate from operation time."),
+                text("Count = boundary checks + array reads + array writes + top-index updates. Local assignments, return handling and display work are excluded."),
+                text("Time includes the boundary check and core action; excludes parsing, explanation creation and drawing. Tiny timings vary."),
+                text("Your stack is kept when switching labs. Reset clears the stack and history; closing the application ends the session."))
         );
 
-        content.setPadding(new Insets(20));
-        content.setStyle("-fx-background-color: white;");
+        getStyleClass().add("lab-page");
+        inputField.setId("input-field");
+        status.setId("status");
+        Ui.status(status, "neutral");
+        title.getStyleClass().add("page-title");
 
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.setFitToWidth(true);
-        scroll.setMinHeight(0);
-        VBox.setVgrow(scroll, Priority.ALWAYS);
+        content.getStyleClass().add("page-content");
+        ScrollPane scroll = Ui.scroll(content);
+        getChildren().add(scroll);
 
-        getChildren().addAll(back, title, scroll);
 
         resetStack();
     }
@@ -144,7 +130,7 @@ public class StackView extends VBox {
         try {
             value = Integer.parseInt(inputField.getText().trim());
         } catch (NumberFormatException exception) {
-            status.setStyle("-fx-text-fill: #b91c1c;");
+            Ui.status(status, "error");
             status.setText(
                 "Enter a whole number between -2147483648 and 2147483647."
             );
@@ -152,7 +138,8 @@ public class StackView extends VBox {
             stepsArea.setText(
                 "Input validation failed. No stack operation was attempted."
             );
-            metrics.setText("No operation measured.");
+            stats.clear();
+        metrics.setText("No operation measured.");
             return;
         }
 
@@ -171,12 +158,10 @@ public class StackView extends VBox {
             CustomStack.Operation operation) {
 
         attemptNumber++;
+        stats.set(Integer.toString(operation.getCountedOperations()), Ui.time(operation.elapsedNanoseconds),
+            Integer.toString(stack.size()), Integer.toString(attemptNumber));
 
-        status.setStyle(
-            operation.successful
-                ? "-fx-text-fill: #15803d;"
-                : "-fx-text-fill: #b91c1c;"
-        );
+        Ui.status(status, operation.successful ? "success" : "error");
 
         status.setText(operation.message);
         stepsArea.setText(operation.steps);
@@ -230,14 +215,7 @@ public class StackView extends VBox {
             item.setMaxWidth(Double.MAX_VALUE);
             item.setMinHeight(45);
 
-            item.setStyle(
-                "-fx-background-color: " +
-                (isTop ? "#c2410c" : "#1d4ed8") + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 16px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;"
-            );
+            item.getStyleClass().addAll("value-box", isTop ? "active-value" : "ordinary");
 
             stackDisplay.getChildren().add(item);
         }
@@ -248,8 +226,9 @@ public class StackView extends VBox {
         attemptNumber = 0;
 
         inputField.clear();
-        status.setStyle("-fx-text-fill: #475569;");
+        Ui.status(status, "neutral");
         status.setText("Stack ready. Enter a number and click Push.");
+        stats.clear();
         metrics.setText("No operation measured.");
         stepsArea.setText("Operation steps will appear here.");
         historyArea.clear();

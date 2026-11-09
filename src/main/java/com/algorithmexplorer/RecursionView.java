@@ -46,15 +46,17 @@ public class RecursionView extends VBox {
 
     private final Slider speedSlider = new Slider(0.25, 4, 1);
     private final Timeline playback;
+    private final Ui.Stats stats = new Ui.Stats("CALLS", "MAX DEPTH", "COUNTED OPS", "RUN TIME");
+    private final javafx.scene.control.ProgressBar progress = new javafx.scene.control.ProgressBar(0);
 
     private RecursionAlgorithms.Result currentResult;
     private int currentStep;
     private boolean playing;
 
     public RecursionView(Runnable onBack) {
-        setPadding(new Insets(20));
-        setSpacing(12);
-        setStyle("-fx-background-color: #f1f5f9;");
+        setPadding(new Insets(0));
+        setSpacing(0);
+
 
         playback = new Timeline(
             new KeyFrame(Duration.seconds(1), event -> advance())
@@ -74,9 +76,7 @@ public class RecursionView extends VBox {
         });
 
         Label title = new Label("Recursion Lab");
-        title.setStyle(
-            "-fx-font-size: 26px; -fx-font-weight: bold;"
-        );
+
 
         algorithmChoice.getItems().addAll(
             "Factorial", "Fibonacci", "Recursive Binary Search"
@@ -92,10 +92,6 @@ public class RecursionView extends VBox {
         inputField.setOnAction(event -> runAlgorithm());
         arrayField.setOnAction(event -> runAlgorithm());
 
-        runButton.setStyle(
-            "-fx-background-color: #1d4ed8;" +
-            "-fx-text-fill: white; -fx-padding: 10 18;"
-        );
         runButton.setOnAction(event -> runAlgorithm());
 
         Button example = new Button("Load Example");
@@ -132,16 +128,13 @@ public class RecursionView extends VBox {
             label.setWrapText(true);
         }
 
-        output.setStyle(
-            "-fx-font-size: 19px; -fx-font-weight: bold;"
-        );
-        stepPosition.setStyle("-fx-font-weight: bold;");
-        description.setStyle("-fx-font-size: 16px;");
+
+
 
         stackArea.setEditable(false);
         stackArea.setWrapText(false);
         stackArea.setPrefRowCount(9);
-        stackArea.setStyle("-fx-font-family: monospace;");
+
 
         playButton.setOnAction(event -> {
             if (!playing && hasNext()) {
@@ -196,7 +189,7 @@ public class RecursionView extends VBox {
             nextButton, restartButton, lastButton
         );
 
-        speedSlider.setShowTickLabels(true);
+        speedSlider.setShowTickLabels(false);
         speedSlider.setShowTickMarks(true);
         speedSlider.setMajorTickUnit(0.75);
         speedSlider.setMinorTickCount(2);
@@ -211,61 +204,46 @@ public class RecursionView extends VBox {
         );
         updateSpeed();
 
-        VBox content = new VBox(
-            14,
-            algorithmChoice,
-            instructions,
-            arrayInput,
-            inputLabel,
-            inputField,
-            inputControls,
-            status,
-            output,
-            totals,
-            stepPosition,
-            description,
-            text("Active call stack — most recent call at the top"),
-            stackArea,
-            stepMetrics,
-            playbackControls,
-            speedLabel,
-            speedSlider,
-            complexity,
-            text(
-                "CALL adds a frame. RETURN removes it. The displayed " +
-                "stack shows the state after each recorded action."
-            ),
-            text(
-                "Counted operations = calls + base-case checks + " +
-                "multiplications + additions + value comparisons. " +
-                "Argument/index arithmetic, array reads, local assignments, " +
-                "returns and trace operations are excluded."
-            ),
-            text(
-                "For binary search, equality and less-than tests each " +
-                "count as one value comparison. Sortedness validation " +
-                "is excluded from the displayed search counters."
-            ),
-            text(
-                "Time includes recursion, counters and trace recording. " +
-                "It excludes input validation, initial allocation/copying " +
-                "and playback. It is not a pure algorithm benchmark."
-            ),
-            text(
-                "Maximum depth counts simultaneously active calls, " +
-                "including the initial invocation."
-            )
+
+        Ui.primary(runButton); Ui.primary(playButton);
+        runButton.setId("run"); playButton.setId("play"); nextButton.setId("next");
+        algorithmChoice.setId("algorithm-choice"); arrayField.setId("array-field");
+        inputLabel.setLabelFor(inputField);
+        inputLabel.getStyleClass().add("field-label");
+        arrayField.setAccessibleText("Sorted array");
+        instructions.getStyleClass().add("muted");
+        output.getStyleClass().add("result-value");
+        description.getStyleClass().add("step-description");
+        stepMetrics.getStyleClass().add("inline-metrics");
+        stepPosition.getStyleClass().add("step-position");
+        stackArea.getStyleClass().add("call-stack");
+        stackArea.setAccessibleText("Active recursive call stack");
+        progress.setMaxWidth(Double.MAX_VALUE);
+        VBox content = new VBox(18,
+            Ui.heading("ALGORITHMS / RECURSION", "Recursion Lab", "Follow each call down to the base case, then watch the answers return."),
+            Ui.card("Set up your experiment", Ui.field("Algorithm", algorithmChoice), instructions,
+                arrayInput, new VBox(7, inputLabel, inputField), inputControls, status),
+            Ui.card("Final result", output, stats),
+            Ui.card("Call explorer", stepPosition, progress, description,
+                Ui.label("ACTIVE CALL STACK · newest call at the top", "field-label"), stackArea,
+                stepMetrics, playbackControls, Ui.label("Playback speed", "field-label"), speedSlider, speedLabel),
+            Ui.details("Complexity & measurement notes", complexity, totals,
+                text("CALL adds a frame; RETURN removes it. The stack shown is the state after each action."),
+                text("Counted operations = calls + base-case checks + multiplications + additions + value comparisons. Initial invocation is included. Argument/index arithmetic, reads, local assignments and trace operations are excluded."),
+                text("Binary-search equality and less-than tests each count as one comparison. Sortedness validation is excluded from search counters."),
+                text("Time includes recursion, counters and trace recording; excludes validation, initial allocation/copying and playback. Maximum depth counts simultaneously active calls."))
         );
 
-        content.setPadding(new Insets(20));
-        content.setStyle("-fx-background-color: white;");
+        getStyleClass().add("lab-page");
+        inputField.setId("input-field");
+        status.setId("status");
+        Ui.status(status, "neutral");
+        title.getStyleClass().add("page-title");
 
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.setFitToWidth(true);
-        scroll.setMinHeight(0);
-        VBox.setVgrow(scroll, Priority.ALWAYS);
+        content.getStyleClass().add("page-content");
+        ScrollPane scroll = Ui.scroll(content);
+        getChildren().add(scroll);
 
-        getChildren().addAll(back, title, scroll);
 
         inputField.textProperty().addListener(
             (observable, oldValue, newValue) -> resetResults()
@@ -429,10 +407,12 @@ public class RecursionView extends VBox {
                 currentResult.getElapsedNanoseconds() + " ns"
             );
 
+            stats.set(Long.toString(currentResult.getCalls()), Integer.toString(currentResult.getMaximumDepth()),
+                Long.toString(currentResult.getCalls() + currentResult.getBaseChecks() + currentResult.getMultiplications() + currentResult.getAdditions() + currentResult.getValueComparisons()), Ui.time(currentResult.getElapsedNanoseconds()));
             showStep();
 
         } catch (IllegalArgumentException exception) {
-            status.setStyle("-fx-text-fill: #b91c1c;");
+            Ui.status(status, "error");
             status.setText(exception.getMessage());
         }
     }
@@ -499,7 +479,7 @@ public class RecursionView extends VBox {
     private void updateSpeed() {
         speedLabel.setText(
             String.format(
-                "Playback speed: %.2fx — approximately %.2f seconds per step",
+                "%.2fx · about %.2f seconds per step",
                 speedSlider.getValue(),
                 1.0 / speedSlider.getValue()
             )
@@ -519,7 +499,7 @@ public class RecursionView extends VBox {
         lastButton.setDisable(atEnd);
 
         if (loaded) {
-            status.setStyle("-fx-text-fill: #15803d;");
+            Ui.status(status, "success");
             status.setText(
                 atEnd ? "Complete. All recursive calls have returned."
                 : playing ? "Playing calls and returns..."
@@ -529,6 +509,7 @@ public class RecursionView extends VBox {
     }
 
     private void showStep() {
+        progress.setProgress((double) currentStep / Math.max(1, currentResult.getStepCount() - 1));
         RecursionAlgorithms.Step step =
             currentResult.getStep(currentStep);
 
@@ -557,11 +538,13 @@ public class RecursionView extends VBox {
     }
 
     private void resetResults() {
+        stats.clear();
+        progress.setProgress(0);
         stopPlayback();
         currentResult = null;
         currentStep = 0;
 
-        status.setStyle("-fx-text-fill: #475569;");
+        Ui.status(status, "neutral");
         status.setText("Choose an algorithm, enter input and run.");
 
         output.setText("Result: —");

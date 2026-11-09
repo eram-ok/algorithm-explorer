@@ -28,19 +28,18 @@ public class QueueView extends VBox {
     private final TextArea historyArea = new TextArea();
 
     private int attemptNumber;
+    private final Ui.Stats stats = new Ui.Stats("COUNTED OPS", "RUN TIME", "ITEMS", "ATTEMPT");
 
     public QueueView(Runnable onBack) {
-        setSpacing(12);
-        setPadding(new Insets(20));
-        setStyle("-fx-background-color: #f1f5f9;");
+        setSpacing(0);
+        setPadding(new Insets(0));
+
 
         Button back = new Button("Back to Home");
         back.setOnAction(event -> onBack.run());
 
         Label title = new Label("Circular Queue Explorer");
-        title.setStyle(
-            "-fx-font-size: 26px; -fx-font-weight: bold;"
-        );
+
 
         inputField.setPromptText("Enter a whole number to enqueue");
         inputField.setOnAction(event -> enqueueValue());
@@ -64,7 +63,9 @@ public class QueueView extends VBox {
         );
 
         Button reset = new Button("Reset Queue");
-        reset.setOnAction(event -> resetQueue());
+        reset.setOnAction(event -> {
+            if (queue.isEmpty() && historyArea.getText().isEmpty() || Ui.confirmReset(this, "queue")) resetQueue();
+        });
 
         FlowPane controls = new FlowPane(10, 10);
         controls.getChildren().addAll(
@@ -76,13 +77,10 @@ public class QueueView extends VBox {
         logicalOrder.setWrapText(true);
         metrics.setWrapText(true);
 
-        state.setStyle("-fx-font-weight: bold;");
-        logicalOrder.setStyle(
-            "-fx-font-weight: bold; -fx-font-size: 16px;"
-        );
+
 
         arrayDisplay.setPadding(new Insets(15));
-        arrayDisplay.setStyle("-fx-background-color: #e2e8f0;");
+
 
         stepsArea.setEditable(false);
         stepsArea.setWrapText(true);
@@ -92,62 +90,36 @@ public class QueueView extends VBox {
         historyArea.setWrapText(true);
         historyArea.setPrefRowCount(5);
 
-        VBox content = new VBox(
-            14,
-            text(
-                "First In, First Out: enqueue at the rear, dequeue at " +
-                "the front. Array capacity: 5."
-            ),
-            inputField,
-            controls,
-            status,
-            state,
-            text("Physical array slots"),
-            arrayDisplay,
-            text(
-                "Orange: front item | Blue: other active items | " +
-                "Grey: inactive slot.\n" +
-                "NEXT WRITE identifies the enqueue position. " +
-                "When full, enqueue is blocked even though this index exists."
-            ),
-            logicalOrder,
-            text("Latest operation steps"),
-            stepsArea,
-            metrics,
-            text("Operation history"),
-            historyArea,
-            text(
-                "Core operations: Enqueue, Dequeue, Front and Rear " +
-                "are O(1). Storage is O(capacity).\n" +
-                "Drawing the physical array takes O(capacity), while " +
-                "displaying logical queue order takes O(n)."
-            ),
-            text(
-                "Counting model: boundary checks + array reads + array " +
-                "writes + stored-index updates + size updates. " +
-                "Arithmetic, local assignments and display work are excluded."
-            ),
-            text(
-                "Time measures the boundary check and core queue action. " +
-                "Input parsing, explanation creation and drawing are excluded. " +
-                "Small timings vary and are not reliable benchmarks."
-            ),
-            text(
-                "Empty and full queues can both have front == nextInsert. " +
-                "The size field distinguishes them.\n" +
-                "Resetting or reopening this screen starts a new empty queue."
-            )
+
+        Ui.primary(enqueue); Ui.danger(reset);
+        enqueue.setId("enqueue"); dequeue.setId("dequeue"); reset.setId("reset");
+        state.getStyleClass().add("state-badge");
+        logicalOrder.getStyleClass().add("logical-order");
+        arrayDisplay.getStyleClass().add("visual-canvas");
+        VBox content = new VBox(18,
+            Ui.heading("DATA STRUCTURES / QUEUE", "Circular Queue Explorer", "First in, first out. Watch the indexes wrap around the array."),
+            Ui.card("Try an operation", Ui.field("Value to enqueue", inputField), controls, status),
+            Ui.card("Physical array", state, arrayDisplay,
+                Ui.label("Amber · front    Blue · active    Grey · empty. NEXT WRITE is blocked when full.", "legend"), logicalOrder),
+            Ui.card("Latest operation", stats, stepsArea),
+            Ui.details("Operation history", historyArea),
+            Ui.details("Complexity & measurement notes", metrics,
+                text("Enqueue, Dequeue, Front and Rear: O(1). Storage: O(capacity). Physical rendering takes O(capacity); logical rendering takes O(n)."),
+                text("Count = boundary checks + array reads + writes + stored-index updates + size updates. Arithmetic, local assignments and display work are excluded."),
+                text("Time includes the boundary check and core action; excludes parsing, explanations and drawing. Size distinguishes full from empty when front equals nextInsert."),
+                text("Your queue is kept when switching labs. Reset clears the queue and history; closing the application ends the session."))
         );
 
-        content.setPadding(new Insets(20));
-        content.setStyle("-fx-background-color: white;");
+        getStyleClass().add("lab-page");
+        inputField.setId("input-field");
+        status.setId("status");
+        Ui.status(status, "neutral");
+        title.getStyleClass().add("page-title");
 
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.setFitToWidth(true);
-        scroll.setMinHeight(0);
-        VBox.setVgrow(scroll, Priority.ALWAYS);
+        content.getStyleClass().add("page-content");
+        ScrollPane scroll = Ui.scroll(content);
+        getChildren().add(scroll);
 
-        getChildren().addAll(back, title, scroll);
 
         resetQueue();
     }
@@ -164,7 +136,7 @@ public class QueueView extends VBox {
         try {
             value = Integer.parseInt(inputField.getText().trim());
         } catch (NumberFormatException exception) {
-            status.setStyle("-fx-text-fill: #b91c1c;");
+            Ui.status(status, "error");
             status.setText(
                 "Enter a whole number between -2147483648 and 2147483647."
             );
@@ -172,7 +144,8 @@ public class QueueView extends VBox {
             stepsArea.setText(
                 "Input validation failed. No queue operation was attempted."
             );
-            metrics.setText("No operation measured.");
+            stats.clear();
+        metrics.setText("No operation measured.");
             return;
         }
 
@@ -191,12 +164,10 @@ public class QueueView extends VBox {
             CustomQueue.Operation operation) {
 
         attemptNumber++;
+        stats.set(Integer.toString(operation.getCountedOperations()), Ui.time(operation.elapsedNanoseconds),
+            Integer.toString(queue.size()), Integer.toString(attemptNumber));
 
-        status.setStyle(
-            operation.successful
-                ? "-fx-text-fill: #15803d;"
-                : "-fx-text-fill: #b91c1c;"
-        );
+        Ui.status(status, operation.successful ? "success" : "error");
 
         status.setText(operation.message);
         stepsArea.setText(operation.steps);
@@ -253,13 +224,7 @@ public class QueueView extends VBox {
             value.setAlignment(Pos.CENTER);
             value.setMinSize(90, 50);
             value.setPadding(new Insets(10));
-            value.setStyle(
-                "-fx-background-color: " + colour + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 18px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;"
-            );
+            value.getStyleClass().addAll("value-box", !active ? "empty-value" : index == queue.getFrontIndex() ? "active-value" : "ordinary");
 
             String markers = "";
 
@@ -312,8 +277,9 @@ public class QueueView extends VBox {
         attemptNumber = 0;
 
         inputField.clear();
-        status.setStyle("-fx-text-fill: #475569;");
+        Ui.status(status, "neutral");
         status.setText("Queue ready. Enter a number and click Enqueue.");
+        stats.clear();
         metrics.setText("No operation measured.");
         stepsArea.setText("Operation steps will appear here.");
         historyArea.clear();
