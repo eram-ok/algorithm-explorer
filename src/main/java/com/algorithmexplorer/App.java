@@ -33,7 +33,6 @@ public class App extends Application {
         BorderPane layout = new BorderPane();
         layout.setStyle("-fx-background-color: #f1f5f9;");
 
-        // Application heading
         Label title = new Label("Algorithm Explorer");
         title.setStyle(
             "-fx-font-size: 30px;" +
@@ -44,17 +43,15 @@ public class App extends Application {
         Label subtitle = new Label(
             "Explore algorithms and data structures step by step."
         );
-        subtitle.setStyle(
-            "-fx-font-size: 15px;" +
-            "-fx-text-fill: #475569;"
-        );
         subtitle.setWrapText(true);
+        subtitle.setStyle(
+            "-fx-font-size: 15px; -fx-text-fill: #475569;"
+        );
 
         VBox heading = new VBox(8, title, subtitle);
         heading.setPadding(new Insets(25));
         layout.setTop(heading);
 
-        // Area that explains the selected laboratory
         Label contentTitle = new Label("Welcome");
         contentTitle.setStyle(
             "-fx-font-size: 24px;" +
@@ -64,15 +61,15 @@ public class App extends Application {
 
         Label contentText = new Label(
             "Choose a laboratory from the menu.\n\n" +
-            "You will be able to enter your own input, run an algorithm, " +
-            "and explore its results and execution steps.\n\n" +
-            "This is our interface prototype. " +
-            "Algorithm execution will be added in the next stages."
+            "Sorting Lab: explore four sorting algorithms with " +
+            "visual playback, operation counts and timing.\n\n" +
+            "Stack Explorer: push, pop and peek using our own " +
+            "array-based stack.\n\n" +
+            "The other laboratories are still under development."
         );
         contentText.setWrapText(true);
         contentText.setStyle(
-            "-fx-font-size: 16px;" +
-            "-fx-text-fill: #475569;"
+            "-fx-font-size: 16px; -fx-text-fill: #475569;"
         );
 
         VBox content = new VBox(18, contentTitle, contentText);
@@ -85,7 +82,6 @@ public class App extends Application {
         layout.setCenter(content);
         BorderPane.setMargin(content, new Insets(0, 25, 20, 0));
 
-        // Navigation menu
         VBox menu = new VBox(12);
         menu.setPrefWidth(230);
         menu.setPadding(new Insets(0, 20, 20, 25));
@@ -93,33 +89,33 @@ public class App extends Application {
         menu.getChildren().addAll(
             createMenuButton(
                 "Sorting Lab",
-                "Compare bubble, selection, insertion and merge sort. " +
-                "Watch comparisons and movements as numbers are sorted.",
-                contentTitle, contentText
+                "",
+                contentTitle,
+                contentText
             ),
             createMenuButton(
                 "Recursion Lab",
-                "Explore factorial, Fibonacci and recursive binary search. " +
-                "Follow function calls, base cases and returned values.",
-                contentTitle, contentText
+                "Explore factorial, Fibonacci and recursive binary search.",
+                contentTitle,
+                contentText
             ),
             createMenuButton(
                 "Stack Explorer",
-                "Push, pop and peek at items in our custom stack. " +
-                "Observe last-in, first-out behaviour.",
-                contentTitle, contentText
+                "",
+                contentTitle,
+                contentText
             ),
             createMenuButton(
                 "Queue Explorer",
-                "Enqueue and dequeue items in our custom circular queue. " +
-                "Observe first-in, first-out behaviour.",
-                contentTitle, contentText
+                "Explore a custom circular queue with enqueue and dequeue.",
+                contentTitle,
+                contentText
             ),
             createMenuButton(
                 "Linked List Explorer",
-                "Insert, search for and delete values. " +
-                "Observe how our own nodes link together.",
-                contentTitle, contentText
+                "Insert, search and delete using our own linked nodes.",
+                contentTitle,
+                contentText
             )
         );
 
@@ -154,25 +150,36 @@ public class App extends Application {
         );
 
         button.setOnAction(event -> {
-            if ("Sorting Lab".equals(name)) {
-                scene.setRoot(
-                    new SortingView(() -> scene.setRoot(createHomeScreen()))
-                );
-                return;
+            switch (name) {
+                case "Sorting Lab":
+                    scene.setRoot(
+                        new SortingView(
+                            () -> scene.setRoot(createHomeScreen())
+                        )
+                    );
+                    break;
+
+                case "Stack Explorer":
+                    scene.setRoot(
+                        new StackView(
+                            () -> scene.setRoot(createHomeScreen())
+                        )
+                    );
+                    break;
+
+                default:
+                    contentTitle.setText(name);
+                    contentText.setText(
+                        description + "\n\n" +
+                        "This laboratory is not implemented yet."
+                    );
             }
-            contentTitle.setText(name);
-            contentText.setText(
-                description + "\n\n" +
-                "Planned results: execution steps, operation counts, " +
-                "running time and complexity explanations.\n\n" +
-                "This laboratory is not implemented yet."
-            );
         });
 
         return button;
     }
 
-    // Retained for compatibility with the starter controllers.
+    // Retained because the starter FXML controllers reference this method.
     static void setRoot(String fxml) throws IOException {
         scene.setRoot(loadFXML(fxml));
     }
