@@ -61,11 +61,11 @@ public class App extends Application {
 
         Label contentText = new Label(
             "Choose a laboratory from the menu.\n\n" +
-            "Sorting Lab: explore four sorting algorithms with " +
-            "visual playback, operation counts and timing.\n\n" +
-            "Stack Explorer: push, pop and peek using our own " +
-            "array-based stack.\n\n" +
-            "The other laboratories are still under development."
+            "Sorting Lab: four sorting algorithms with visual playback.\n\n" +
+            "Stack Explorer: Push, Pop and Peek using our own stack.\n\n" +
+            "Queue Explorer: Enqueue, Dequeue, Front and Rear using " +
+            "our own circular queue.\n\n" +
+            "Recursion and linked lists are still under development."
         );
         contentText.setWrapText(true);
         contentText.setStyle(
@@ -88,34 +88,23 @@ public class App extends Application {
 
         menu.getChildren().addAll(
             createMenuButton(
-                "Sorting Lab",
-                "",
-                contentTitle,
-                contentText
+                "Sorting Lab", "", contentTitle, contentText
             ),
             createMenuButton(
                 "Recursion Lab",
                 "Explore factorial, Fibonacci and recursive binary search.",
-                contentTitle,
-                contentText
+                contentTitle, contentText
             ),
             createMenuButton(
-                "Stack Explorer",
-                "",
-                contentTitle,
-                contentText
+                "Stack Explorer", "", contentTitle, contentText
             ),
             createMenuButton(
-                "Queue Explorer",
-                "Explore a custom circular queue with enqueue and dequeue.",
-                contentTitle,
-                contentText
+                "Queue Explorer", "", contentTitle, contentText
             ),
             createMenuButton(
                 "Linked List Explorer",
                 "Insert, search and delete using our own linked nodes.",
-                contentTitle,
-                contentText
+                contentTitle, contentText
             )
         );
 
@@ -167,6 +156,14 @@ public class App extends Application {
                     );
                     break;
 
+                case "Queue Explorer":
+                    scene.setRoot(
+                        new QueueView(
+                            () -> scene.setRoot(createHomeScreen())
+                        )
+                    );
+                    break;
+
                 default:
                     contentTitle.setText(name);
                     contentText.setText(
@@ -179,7 +176,7 @@ public class App extends Application {
         return button;
     }
 
-    // Retained because the starter FXML controllers reference this method.
+    // Retained for compatibility with the starter FXML controllers.
     static void setRoot(String fxml) throws IOException {
         scene.setRoot(loadFXML(fxml));
     }
