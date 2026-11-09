@@ -4,6 +4,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
@@ -16,8 +17,10 @@ import javafx.util.Duration;
 
 public class RecursionView extends VBox {
 
+    private final ComboBox<String> algorithmChoice = new ComboBox<>();
     private final TextField inputField = new TextField();
 
+    private final Label instructions = new Label();
     private final Label status = new Label();
     private final Label output = new Label();
     private final Label totals = new Label();
@@ -25,9 +28,11 @@ public class RecursionView extends VBox {
     private final Label description = new Label();
     private final Label stepMetrics = new Label();
     private final Label speedLabel = new Label();
+    private final Label complexity = new Label();
 
     private final TextArea stackArea = new TextArea();
 
+    private final Button runButton = new Button();
     private final Button playButton = new Button("Play");
     private final Button pauseButton = new Button("Pause");
     private final Button previousButton = new Button("Previous");
@@ -64,20 +69,22 @@ public class RecursionView extends VBox {
             }
         });
 
-        Label title = new Label("Recursion Lab — Factorial");
+        Label title = new Label("Recursion Lab");
         title.setStyle(
             "-fx-font-size: 26px; -fx-font-weight: bold;"
         );
 
-        inputField.setPromptText("Enter an integer from 0 to 20");
-        inputField.setOnAction(event -> runFactorial());
+        algorithmChoice.getItems().addAll("Factorial", "Fibonacci");
+        algorithmChoice.setValue("Factorial");
+        algorithmChoice.setMaxWidth(Double.MAX_VALUE);
 
-        Button run = new Button("Run Factorial");
-        run.setStyle(
+        inputField.setOnAction(event -> runAlgorithm());
+
+        runButton.setStyle(
             "-fx-background-color: #1d4ed8;" +
             "-fx-text-fill: white; -fx-padding: 10 18;"
         );
-        run.setOnAction(event -> runFactorial());
+        runButton.setOnAction(event -> runAlgorithm());
 
         Button example = new Button("Load Example");
         example.setOnAction(event -> {
@@ -93,11 +100,14 @@ public class RecursionView extends VBox {
         });
 
         FlowPane inputControls = new FlowPane(10, 10);
-        inputControls.getChildren().addAll(run, example, clear);
+        inputControls.getChildren().addAll(
+            runButton, example, clear
+        );
 
         Label[] labels = {
-            status, output, totals, stepPosition,
-            description, stepMetrics, speedLabel
+            instructions, status, output, totals,
+            stepPosition, description, stepMetrics,
+            speedLabel, complexity
         };
 
         for (Label label : labels) {
@@ -185,10 +195,8 @@ public class RecursionView extends VBox {
 
         VBox content = new VBox(
             14,
-            text(
-                "Factorial: n! = n × (n − 1)!.\n" +
-                "Base cases: 0! = 1 and 1! = 1."
-            ),
+            algorithmChoice,
+            instructions,
             inputField,
             inputControls,
             status,
@@ -202,30 +210,27 @@ public class RecursionView extends VBox {
             playbackControls,
             speedLabel,
             speedSlider,
+            complexity,
             text(
-                "CALL adds a frame. RETURN removes that frame and passes " +
-                "its answer to the caller. The displayed stack shows the " +
-                "state after the recorded action."
+                "CALL adds a frame. RETURN removes it and passes the " +
+                "answer to its caller. The displayed stack shows the " +
+                "state after each recorded action."
             ),
             text(
-                "Theoretical algorithm complexity: O(n) time and O(n) " +
-                "call-stack space, under a constant-cost arithmetic model.\n" +
-                "Recording every stack snapshot adds O(n²) trace storage."
+                "Counted operations = calls + base-case checks + " +
+                "multiplications + additions. Calls include the initial " +
+                "invocation. Argument subtraction, local assignments, " +
+                "returns and trace operations are excluded."
             ),
             text(
-                "Counted operations = function calls + base-case checks + " +
-                "multiplications. This is a teaching model, not a count of " +
-                "every Java instruction. Calls include the initial invocation."
+                "Maximum depth counts simultaneously active calls, " +
+                "including the initial invocation. It is different " +
+                "from the total number of calls."
             ),
             text(
-                "Maximum depth counts simultaneously active calls, including " +
-                "the initial call. Time includes recursion, counters and " +
-                "trace recording; it excludes initial trace allocation " +
-                "and interface playback."
-            ),
-            text(
-                "Input is limited to 0–20 because 21! exceeds the range " +
-                "of Java's long type."
+                "Time includes recursion, counters and trace recording. " +
+                "It excludes initial trace allocation and playback. " +
+                "This is not a pure algorithm benchmark."
             )
         );
 
@@ -243,6 +248,14 @@ public class RecursionView extends VBox {
             (observable, oldValue, newValue) -> resetResults()
         );
 
+        algorithmChoice.valueProperty().addListener(
+            (observable, oldValue, newValue) -> {
+                resetResults();
+                updateAlgorithmDetails();
+            }
+        );
+
+        updateAlgorithmDetails();
         resetResults();
     }
 
@@ -252,18 +265,59 @@ public class RecursionView extends VBox {
         return label;
     }
 
+    private void updateAlgorithmDetails() {
+        String algorithm = algorithmChoice.getValue();
+        runButton.setText("Run " + algorithm);
+
+        if ("Fibonacci".equals(algorithm)) {
+            inputField.setPromptText("Enter an integer from 0 to 10");
+
+            instructions.setText(
+                "F(0) = 0, F(1) = 1.\n" +
+                "For n > 1: F(n) = F(n - 1) + F(n - 2).\n" +
+                "Limit: 0–10 to keep the naive recursive trace manageable."
+            );
+
+            complexity.setText(
+                "Naive recursive Fibonacci: O(2ⁿ) time upper bound " +
+                "and O(n) call-stack space.\n" +
+                "It recalculates the same smaller problems repeatedly. " +
+                "No memoization is used.\n" +
+                "If input limits were expanded, recording every stack " +
+                "snapshot has an O(n × 2ⁿ) storage upper bound."
+            );
+        } else {
+            inputField.setPromptText("Enter an integer from 0 to 20");
+
+            instructions.setText(
+                "Factorial: n! = n × (n - 1)!.\n" +
+                "Base cases: 0! = 1 and 1! = 1.\n" +
+                "Limit: 0–20 because 21! does not fit in Java's long."
+            );
+
+            complexity.setText(
+                "Recursive factorial: O(n) time and O(n) call-stack " +
+                "space under a constant-cost arithmetic model.\n" +
+                "Recording every stack snapshot adds O(n²) trace storage."
+            );
+        }
+    }
+
     private String statistics(
             long calls,
             long checks,
-            long multiplications) {
+            long multiplications,
+            long additions) {
 
         return "Calls: " + calls +
             " | Base-case checks: " + checks +
-            " | Multiplications: " + multiplications +
-            "\nCounted operations: " + (calls + checks + multiplications);
+            "\nMultiplications: " + multiplications +
+            " | Additions: " + additions +
+            " | Counted operations: " +
+            (calls + checks + multiplications + additions);
     }
 
-    private void runFactorial() {
+    private void runAlgorithm() {
         resetResults();
 
         final int input;
@@ -271,21 +325,30 @@ public class RecursionView extends VBox {
         try {
             input = Integer.parseInt(inputField.getText().trim());
         } catch (NumberFormatException exception) {
-            showError("Enter a whole number from 0 to 20.");
+            showError("Enter a valid whole number within the displayed range.");
             return;
         }
 
         try {
-            currentResult = RecursionAlgorithms.factorial(input);
+            String algorithm = algorithmChoice.getValue();
 
-            output.setText(input + "! = " + currentResult.getValue());
+            currentResult = RecursionAlgorithms.run(algorithm, input);
+
+            String expression = "Factorial".equals(algorithm)
+                ? input + "!"
+                : "F(" + input + ")";
+
+            output.setText(
+                expression + " = " + currentResult.getValue()
+            );
 
             totals.setText(
                 "FULL RUN — " +
                 statistics(
                     currentResult.getCalls(),
                     currentResult.getBaseChecks(),
-                    currentResult.getMultiplications()
+                    currentResult.getMultiplications(),
+                    currentResult.getAdditions()
                 ) +
                 "\nMaximum active depth: " +
                 currentResult.getMaximumDepth() +
@@ -377,7 +440,8 @@ public class RecursionView extends VBox {
             statistics(
                 step.calls,
                 step.baseChecks,
-                step.multiplications
+                step.multiplications,
+                step.additions
             ) +
             "\nActive depth: " + step.activeDepth
         );
@@ -391,7 +455,7 @@ public class RecursionView extends VBox {
         currentStep = 0;
 
         status.setStyle("-fx-text-fill: #475569;");
-        status.setText("Enter a number and click Run Factorial.");
+        status.setText("Choose an algorithm, enter a number and run.");
 
         output.setText("Result: —");
         totals.setText("Full-run statistics: —");

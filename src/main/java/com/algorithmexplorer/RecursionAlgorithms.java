@@ -8,6 +8,7 @@ public class RecursionAlgorithms {
         public final long calls;
         public final long baseChecks;
         public final long multiplications;
+        public final long additions;
         public final int activeDepth;
 
         public Step(
@@ -16,6 +17,7 @@ public class RecursionAlgorithms {
                 long calls,
                 long baseChecks,
                 long multiplications,
+                long additions,
                 int activeDepth) {
 
             this.description = description;
@@ -23,11 +25,13 @@ public class RecursionAlgorithms {
             this.calls = calls;
             this.baseChecks = baseChecks;
             this.multiplications = multiplications;
+            this.additions = additions;
             this.activeDepth = activeDepth;
         }
     }
 
     public static class Result {
+        private final String functionName;
         private final Step[] steps;
         private int stepCount;
 
@@ -38,38 +42,58 @@ public class RecursionAlgorithms {
         private long calls;
         private long baseChecks;
         private long multiplications;
+        private long additions;
         private int maximumDepth;
         private long elapsedNanoseconds;
 
-        private Result(int input) {
-            // Each invocation produces one call step and one return step.
-            steps = new Step[2 * (input + 1)];
+        private Result(
+                String functionName,
+                int input,
+                int stepCapacity) {
+
+            this.functionName = functionName;
+            steps = new Step[stepCapacity];
             activeArguments = new int[input + 1];
         }
 
+        private void enter(int argument) {
+            calls++;
+
+            activeArguments[activeSize] = argument;
+            activeSize++;
+
+            if (activeSize > maximumDepth) {
+                maximumDepth = activeSize;
+            }
+        }
+
         private void record(String description) {
+            if (stepCount == steps.length) {
+                throw new IllegalStateException(
+                    "Trace capacity exceeded."
+                );
+            }
+
             StringBuilder stack = new StringBuilder();
 
             if (activeSize == 0) {
                 stack.append("Empty — all calls have returned.");
             } else {
-                // Most recent invocation appears at the top.
                 for (int i = activeSize - 1; i >= 0; i--) {
-                    if (i == activeSize - 1) {
-                        stack.append("TOP → ");
-                    } else {
-                        stack.append("      ");
-                    }
+                    stack.append(
+                        i == activeSize - 1 ? "TOP → " : "      "
+                    );
 
-                    stack.append("factorial(")
+                    stack.append(functionName)
+                         .append("(")
                          .append(activeArguments[i])
                          .append(")");
 
-                    if (i == activeSize - 1) {
-                        stack.append(" — current call");
-                    } else {
-                        stack.append(" — waiting for a result");
-                    }
+                    stack.append(
+                        i == activeSize - 1
+                            ? " — current call"
+                            : " — waiting for a result"
+                    );
 
                     stack.append("\n");
                 }
@@ -81,13 +105,16 @@ public class RecursionAlgorithms {
                 calls,
                 baseChecks,
                 multiplications,
+                additions,
                 activeSize
             );
         }
 
         public Step getStep(int index) {
             if (index < 0 || index >= stepCount) {
-                throw new IndexOutOfBoundsException("Invalid step index.");
+                throw new IndexOutOfBoundsException(
+                    "Invalid step index."
+                );
             }
 
             return steps[index];
@@ -113,6 +140,10 @@ public class RecursionAlgorithms {
             return multiplications;
         }
 
+        public long getAdditions() {
+            return additions;
+        }
+
         public int getMaximumDepth() {
             return maximumDepth;
         }
@@ -122,14 +153,30 @@ public class RecursionAlgorithms {
         }
     }
 
+    public static Result run(String algorithm, int input) {
+        if ("Factorial".equals(algorithm)) {
+            return factorial(input);
+        }
+
+        if ("Fibonacci".equals(algorithm)) {
+            return fibonacci(input);
+        }
+
+        throw new IllegalArgumentException(
+            "Choose a valid recursion algorithm."
+        );
+    }
+
     public static Result factorial(int input) {
         if (input < 0 || input > 20) {
             throw new IllegalArgumentException(
-                "Enter an integer from 0 to 20."
+                "Factorial accepts integers from 0 to 20."
             );
         }
 
-        Result result = new Result(input);
+        Result result = new Result(
+            "factorial", input, 2 * (input + 1)
+        );
 
         long start = System.nanoTime();
         result.value = factorialRecursive(input, result);
@@ -138,21 +185,35 @@ public class RecursionAlgorithms {
         return result;
     }
 
-    private static long factorialRecursive(int n, Result trace) {
-        trace.calls++;
-
-        trace.activeArguments[trace.activeSize] = n;
-        trace.activeSize++;
-
-        if (trace.activeSize > trace.maximumDepth) {
-            trace.maximumDepth = trace.activeSize;
+    public static Result fibonacci(int input) {
+        if (input < 0 || input > 10) {
+            throw new IllegalArgumentException(
+                "Fibonacci accepts integers from 0 to 10 " +
+                "to keep playback manageable."
+            );
         }
+
+        /*
+         * F(10) produces 177 calls and 354 call/return steps.
+         * A fixed array of 512 steps is sufficient for the input limit.
+         */
+        Result result = new Result("fibonacci", input, 512);
+
+        long start = System.nanoTime();
+        result.value = fibonacciRecursive(input, result);
+        result.elapsedNanoseconds = System.nanoTime() - start;
+
+        return result;
+    }
+
+    private static long factorialRecursive(int n, Result trace) {
+        trace.enter(n);
 
         trace.baseChecks++;
         boolean baseCase = n <= 1;
 
         trace.record(
-            "CALL factorial(" + n + "). Check whether " + n +
+            "CALL factorial(" + n + "). Check " + n +
             " <= 1: " + baseCase + "."
         );
 
@@ -167,17 +228,59 @@ public class RecursionAlgorithms {
             return 1;
         }
 
-        // The actual recursive call.
         long smallerResult = factorialRecursive(n - 1, trace);
-
         long answer = n * smallerResult;
-        trace.multiplications++;
 
+        trace.multiplications++;
         trace.activeSize--;
 
         trace.record(
             "RETURN from factorial(" + n + "): " +
             n + " × " + smallerResult + " = " + answer + "."
+        );
+
+        return answer;
+    }
+
+    private static long fibonacciRecursive(int n, Result trace) {
+        trace.enter(n);
+
+        trace.baseChecks++;
+        boolean baseCase = n <= 1;
+
+        trace.record(
+            "CALL fibonacci(" + n + "). Check " + n +
+            " <= 1: " + baseCase + "." +
+            (baseCase
+                ? ""
+                : " First evaluate fibonacci(" + (n - 1) +
+                  "), then fibonacci(" + (n - 2) + ").")
+        );
+
+        if (baseCase) {
+            trace.activeSize--;
+
+            trace.record(
+                "RETURN " + n + " from fibonacci(" + n +
+                "). This is the base case."
+            );
+
+            return n;
+        }
+
+        // Two real recursive calls; no memoization or cached answers.
+        long leftAnswer = fibonacciRecursive(n - 1, trace);
+        long rightAnswer = fibonacciRecursive(n - 2, trace);
+
+        long answer = leftAnswer + rightAnswer;
+        trace.additions++;
+
+        trace.activeSize--;
+
+        trace.record(
+            "RETURN from fibonacci(" + n + "): " +
+            "F(" + (n - 1) + ") + F(" + (n - 2) + ") = " +
+            leftAnswer + " + " + rightAnswer + " = " + answer + "."
         );
 
         return answer;
