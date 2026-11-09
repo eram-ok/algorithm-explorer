@@ -62,10 +62,10 @@ public class App extends Application {
         Label contentText = new Label(
             "Choose a laboratory from the menu.\n\n" +
             "Sorting Lab: four sorting algorithms with visual playback.\n\n" +
-            "Stack Explorer: Push, Pop and Peek using our own stack.\n\n" +
-            "Queue Explorer: Enqueue, Dequeue, Front and Rear using " +
-            "our own circular queue.\n\n" +
-            "Recursion and linked lists are still under development."
+            "Stack Explorer: Push, Pop and Peek.\n\n" +
+            "Queue Explorer: circular queue operations and wraparound.\n\n" +
+            "Linked List Explorer: insert, search and delete linked nodes.\n\n" +
+            "Recursion Lab is still under development."
         );
         contentText.setWrapText(true);
         contentText.setStyle(
@@ -86,27 +86,19 @@ public class App extends Application {
         menu.setPrefWidth(230);
         menu.setPadding(new Insets(0, 20, 20, 25));
 
-        menu.getChildren().addAll(
-            createMenuButton(
-                "Sorting Lab", "", contentTitle, contentText
-            ),
-            createMenuButton(
-                "Recursion Lab",
-                "Explore factorial, Fibonacci and recursive binary search.",
-                contentTitle, contentText
-            ),
-            createMenuButton(
-                "Stack Explorer", "", contentTitle, contentText
-            ),
-            createMenuButton(
-                "Queue Explorer", "", contentTitle, contentText
-            ),
-            createMenuButton(
-                "Linked List Explorer",
-                "Insert, search and delete using our own linked nodes.",
-                contentTitle, contentText
-            )
-        );
+        String[] modules = {
+            "Sorting Lab",
+            "Recursion Lab",
+            "Stack Explorer",
+            "Queue Explorer",
+            "Linked List Explorer"
+        };
+
+        for (String module : modules) {
+            menu.getChildren().add(
+                createMenuButton(module, contentTitle, contentText)
+            );
+        }
 
         layout.setLeft(menu);
 
@@ -123,7 +115,6 @@ public class App extends Application {
 
     private Button createMenuButton(
             String name,
-            String description,
             Label contentTitle,
             Label contentText) {
 
@@ -139,35 +130,30 @@ public class App extends Application {
         );
 
         button.setOnAction(event -> {
+            Runnable back = () -> scene.setRoot(createHomeScreen());
+
             switch (name) {
                 case "Sorting Lab":
-                    scene.setRoot(
-                        new SortingView(
-                            () -> scene.setRoot(createHomeScreen())
-                        )
-                    );
+                    scene.setRoot(new SortingView(back));
                     break;
 
                 case "Stack Explorer":
-                    scene.setRoot(
-                        new StackView(
-                            () -> scene.setRoot(createHomeScreen())
-                        )
-                    );
+                    scene.setRoot(new StackView(back));
                     break;
 
                 case "Queue Explorer":
-                    scene.setRoot(
-                        new QueueView(
-                            () -> scene.setRoot(createHomeScreen())
-                        )
-                    );
+                    scene.setRoot(new QueueView(back));
+                    break;
+
+                case "Linked List Explorer":
+                    scene.setRoot(new LinkedListView(back));
                     break;
 
                 default:
-                    contentTitle.setText(name);
+                    contentTitle.setText("Recursion Lab");
                     contentText.setText(
-                        description + "\n\n" +
+                        "Explore factorial, Fibonacci and recursive " +
+                        "binary search.\n\n" +
                         "This laboratory is not implemented yet."
                     );
             }
