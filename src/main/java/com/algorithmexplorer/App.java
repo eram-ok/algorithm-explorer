@@ -62,10 +62,10 @@ public class App extends Application {
         Label contentText = new Label(
             "Choose a laboratory from the menu.\n\n" +
             "Sorting Lab: four sorting algorithms with visual playback.\n\n" +
+            "Recursion Lab: factorial calls, returns and active stack.\n\n" +
             "Stack Explorer: Push, Pop and Peek.\n\n" +
             "Queue Explorer: circular queue operations and wraparound.\n\n" +
-            "Linked List Explorer: insert, search and delete linked nodes.\n\n" +
-            "Recursion Lab is still under development."
+            "Linked List Explorer: insert, search and delete linked nodes."
         );
         contentText.setWrapText(true);
         contentText.setStyle(
@@ -95,9 +95,7 @@ public class App extends Application {
         };
 
         for (String module : modules) {
-            menu.getChildren().add(
-                createMenuButton(module, contentTitle, contentText)
-            );
+            menu.getChildren().add(createMenuButton(module));
         }
 
         layout.setLeft(menu);
@@ -113,11 +111,7 @@ public class App extends Application {
         return layout;
     }
 
-    private Button createMenuButton(
-            String name,
-            Label contentTitle,
-            Label contentText) {
-
+    private Button createMenuButton(String name) {
         Button button = new Button(name);
         button.setMaxWidth(Double.MAX_VALUE);
         button.setMinHeight(45);
@@ -137,6 +131,10 @@ public class App extends Application {
                     scene.setRoot(new SortingView(back));
                     break;
 
+                case "Recursion Lab":
+                    scene.setRoot(new RecursionView(back));
+                    break;
+
                 case "Stack Explorer":
                     scene.setRoot(new StackView(back));
                     break;
@@ -150,12 +148,7 @@ public class App extends Application {
                     break;
 
                 default:
-                    contentTitle.setText("Recursion Lab");
-                    contentText.setText(
-                        "Explore factorial, Fibonacci and recursive " +
-                        "binary search.\n\n" +
-                        "This laboratory is not implemented yet."
-                    );
+                    throw new IllegalArgumentException("Unknown laboratory.");
             }
         });
 
