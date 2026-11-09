@@ -1,0 +1,21 @@
+# Maven build output
+target/
+
+# Compiled Java files
+*.class
+
+# Local editor settings
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# Local environment files
+.env
+.env.*
+
+# Windows files
+Thumbs.db
+Desktop.ini
