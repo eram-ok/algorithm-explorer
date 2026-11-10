@@ -17,6 +17,19 @@ steps, and explore operation counts, execution times and algorithm complexity.
 | Aruho Bob | S24B23/115 |
 | Atuhaire Sheenah | S25B23/072 |
 
+## Install on Windows
+
+Download the Windows installer from the
+[Releases page](https://github.com/eram-ok/algorithm-explorer/releases/latest).
+
+Open the release's Assets section, download the `.exe` installer,
+run it, and launch Algorithm Explorer from the Start menu.
+
+Java and Maven are bundled or unnecessary for end users.
+The installer includes its own Java runtime.
+
+Tested on Windows 11 x64.
+
 ## Features
 
 - **Sorting Lab:** Bubble, selection, insertion and merge sort.
