@@ -1,3 +1,4 @@
+
 package com.algorithmexplorer;
 
 public class SortTrace {
@@ -43,10 +44,10 @@ public class SortTrace {
 
     public SortTrace(int inputSize) {
         /*
-         * Enough for our three algorithms with at most 50 elements.
-         * Includes comparison, movement, initial and final steps.
+         * Increased capacity to support all five sorting algorithms,
+         * including Quick Sort with up to 50 elements.
          */
-        steps = new Step[2 * inputSize * inputSize + 2];
+        steps = new Step[4 * inputSize * inputSize + 10];
     }
 
     public void record(

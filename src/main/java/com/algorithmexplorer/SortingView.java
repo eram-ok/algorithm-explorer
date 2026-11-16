@@ -1,3 +1,4 @@
+
 package com.algorithmexplorer;
 
 import javafx.animation.KeyFrame;
@@ -42,8 +43,11 @@ public class SortingView extends VBox {
 
     private final Slider speedSlider = new Slider(0.25, 4, 1);
     private final Timeline playback;
-    private final Ui.Stats stats = new Ui.Stats("COMPARISONS", "ARRAY WRITES", "COUNTED OPS", "RUN TIME");
-    private final javafx.scene.control.ProgressBar progress = new javafx.scene.control.ProgressBar(0);
+    private final Ui.Stats stats = new Ui.Stats(
+        "COMPARISONS", "ARRAY WRITES", "COUNTED OPS", "RUN TIME"
+    );
+    private final javafx.scene.control.ProgressBar progress =
+        new javafx.scene.control.ProgressBar(0);
 
     private SortTrace currentTrace;
     private int currentStep;
@@ -52,7 +56,6 @@ public class SortingView extends VBox {
     public SortingView(Runnable onBack) {
         setSpacing(0);
         setPadding(new Insets(0));
-
 
         playback = new Timeline(
             new KeyFrame(Duration.seconds(1), event -> advance())
@@ -73,13 +76,14 @@ public class SortingView extends VBox {
 
         Label title = new Label("Sorting Lab");
 
-
         algorithmChoice.getItems().addAll(
             "Bubble Sort",
             "Selection Sort",
             "Insertion Sort",
-            "Merge Sort"
+            "Merge Sort",
+            "Quick Sort"
         );
+
         algorithmChoice.setValue("Bubble Sort");
         algorithmChoice.setMaxWidth(Double.MAX_VALUE);
 
@@ -112,8 +116,6 @@ public class SortingView extends VBox {
         for (Label label : wrappingLabels) {
             label.setWrapText(true);
         }
-
-
 
         boxes.setPadding(new Insets(10, 0, 10, 0));
 
@@ -183,46 +185,110 @@ public class SortingView extends VBox {
                 updateSpeed();
             }
         );
+
         updateSpeed();
 
+        Ui.primary(runButton);
+        Ui.primary(playButton);
 
-        Ui.primary(runButton); Ui.primary(playButton);
-        runButton.setId("run"); playButton.setId("play"); nextButton.setId("next");
+        runButton.setId("run");
+        playButton.setId("play");
+        nextButton.setId("next");
+
         algorithmChoice.setId("algorithm-choice");
+
         output.getStyleClass().add("result-value");
         description.getStyleClass().add("step-description");
         stepMetrics.getStyleClass().add("inline-metrics");
         stepPosition.getStyleClass().add("step-position");
         keyLabel.getStyleClass().add("key-badge");
         boxes.getStyleClass().add("visual-canvas");
+
         progress.setMaxWidth(Double.MAX_VALUE);
         speedSlider.setAccessibleText("Playback speed");
+
         VBox content = new VBox(18,
-            Ui.heading("ALGORITHMS / SORTING", "Sorting Lab", "Compare methods. Watch values move. Understand the work."),
-            Ui.card("Set up your experiment", Ui.field("Algorithm", algorithmChoice),
-                Ui.field("Numbers · 1–50 comma-separated integers", inputField), inputControls, status),
+            Ui.heading(
+                "ALGORITHMS / SORTING",
+                "Sorting Lab",
+                "Compare methods. Watch values move. Understand the work."
+            ),
+
+            Ui.card(
+                "Set up your experiment",
+                Ui.field("Algorithm", algorithmChoice),
+                Ui.field(
+                    "Numbers · 1–50 comma-separated integers",
+                    inputField
+                ),
+                inputControls,
+                status
+            ),
+
             Ui.card("Final result", output, stats),
-            Ui.card("Step explorer", stepPosition, progress,
-                Ui.label("Blue · ordinary    Amber · active    Green · sorted", "legend"),
-                boxes, keyLabel, description, stepMetrics, controls,
-                Ui.label("Playback speed", "field-label"), speedSlider, speedLabel),
-            Ui.details("Complexity & measurement notes", complexity, totals,
-                text("Boxes show the main array after each action. Merge Sort's temporary buffer is described in the step text."),
-                text("Counted operations = value comparisons + array writes. Swaps contribute two writes; Merge Sort includes temporary-array writes. Loop checks, index updates and trace copies are excluded."),
-                text("Time includes sorting, counters and step recording, excluding initial setup, the final snapshot and playback. These are instrumented timings, not pure algorithm benchmarks."),
-                text("Trace snapshot storage: O(n³) for Bubble, Selection and Insertion; O(n² log n) for Merge. The reference array reserves O(n²) slots."))
+
+            Ui.card(
+                "Step explorer",
+                stepPosition,
+                progress,
+                Ui.label(
+                    "Blue · ordinary    Amber · active    Green · sorted",
+                    "legend"
+                ),
+                boxes,
+                keyLabel,
+                description,
+                stepMetrics,
+                controls,
+                Ui.label("Playback speed", "field-label"),
+                speedSlider,
+                speedLabel
+            ),
+
+            Ui.details(
+                "Complexity & measurement notes",
+                complexity,
+                totals,
+
+                text(
+                    "Boxes show the main array after each action. " +
+                    "Merge Sort's temporary buffer is described in the step text."
+                ),
+
+                text(
+                    "Counted operations = value comparisons + array writes. " +
+                    "Swaps contribute two writes; Merge Sort includes " +
+                    "temporary-array writes. Loop checks, index updates " +
+                    "and trace copies are excluded."
+                ),
+
+                text(
+                    "Time includes sorting, counters and step recording, " +
+                    "excluding initial setup, the final snapshot and playback. " +
+                    "These are instrumented timings, not pure algorithm benchmarks."
+                ),
+
+                text(
+                    "Trace snapshot storage: O(n³) for Bubble, Selection " +
+                    "and Insertion; O(n² log n) for Merge. Quick Sort uses " +
+                    "O(n² log n) average and O(n³) worst-case snapshot storage. " +
+                    "The reference array reserves O(n²) slots."
+                )
+            )
         );
 
         getStyleClass().add("lab-page");
+
         inputField.setId("input-field");
         status.setId("status");
-        Ui.status(status, "neutral");
-        title.getStyleClass().add("page-title");
 
+        Ui.status(status, "neutral");
+
+        title.getStyleClass().add("page-title");
         content.getStyleClass().add("page-content");
+
         ScrollPane scroll = Ui.scroll(content);
         getChildren().add(scroll);
-
 
         inputField.textProperty().addListener(
             (observable, oldValue, newValue) -> resetResults()
@@ -247,9 +313,11 @@ public class SortingView extends VBox {
 
     private void updateAlgorithmDetails() {
         String algorithm = algorithmChoice.getValue();
+
         runButton.setText("Run " + algorithm);
 
         switch (algorithm) {
+
             case "Selection Sort":
                 complexity.setText(
                     "Selection Sort — best, average and worst: O(n²).\n" +
@@ -275,11 +343,22 @@ public class SortingView extends VBox {
                 );
                 break;
 
+            case "Quick Sort":
+                complexity.setText(
+                    "Quick Sort — best and average: O(n log n); " +
+                    "worst: O(n²).\n" +
+                    "Choose a pivot, partition the array around it, " +
+                    "then recursively sort both sides.\n" +
+                    "Algorithm auxiliary space: O(log n) average; O(n) worst."
+                );
+                break;
+
             default:
                 complexity.setText(
                     "Bubble Sort — best: O(n); average and worst: O(n²).\n" +
                     "Swap out-of-order neighbours; stop after a pass " +
-                    "with no swaps.\nAlgorithm auxiliary space: O(1)."
+                    "with no swaps.\n" +
+                    "Algorithm auxiliary space: O(1)."
                 );
         }
     }
@@ -314,8 +393,16 @@ public class SortingView extends VBox {
                 currentTrace.getElapsedNanoseconds() + " ns"
             );
 
-            stats.set(Long.toString(currentTrace.getComparisons()), Long.toString(currentTrace.getWrites()),
-                Long.toString(currentTrace.getComparisons() + currentTrace.getWrites()), Ui.time(currentTrace.getElapsedNanoseconds()));
+            stats.set(
+                Long.toString(currentTrace.getComparisons()),
+                Long.toString(currentTrace.getWrites()),
+                Long.toString(
+                    currentTrace.getComparisons() +
+                    currentTrace.getWrites()
+                ),
+                Ui.time(currentTrace.getElapsedNanoseconds())
+            );
+
             showStep();
 
         } catch (IllegalArgumentException exception) {
@@ -324,7 +411,11 @@ public class SortingView extends VBox {
         }
     }
 
-    private String statistics(long comparisons, long swaps, long writes) {
+    private String statistics(
+            long comparisons,
+            long swaps,
+            long writes) {
+
         return "Comparisons: " + comparisons +
             " | Swaps: " + swaps +
             " | Array writes: " + writes +
@@ -357,7 +448,8 @@ public class SortingView extends VBox {
         speedLabel.setText(
             String.format(
                 "%.2fx · about %.2f seconds per step",
-                speedSlider.getValue(), 1.0 / speedSlider.getValue()
+                speedSlider.getValue(),
+                1.0 / speedSlider.getValue()
             )
         );
     }
@@ -376,6 +468,7 @@ public class SortingView extends VBox {
 
         if (loaded) {
             Ui.status(status, "success");
+
             status.setText(
                 atEnd ? "Playback complete. Restart to watch again."
                 : playing ? "Playing recorded steps..."
@@ -385,7 +478,11 @@ public class SortingView extends VBox {
     }
 
     private void showStep() {
-        progress.setProgress((double) currentStep / Math.max(1, currentTrace.getStepCount() - 1));
+        progress.setProgress(
+            (double) currentStep /
+            Math.max(1, currentTrace.getStepCount() - 1)
+        );
+
         SortTrace.Step step = currentTrace.getStep(currentStep);
 
         stepPosition.setText(
@@ -394,37 +491,75 @@ public class SortingView extends VBox {
         );
 
         description.setText(step.explanation);
+
         stepMetrics.setText(
             "AT THIS STEP — " +
-            statistics(step.comparisons, step.swaps, step.writes)
+            statistics(
+                step.comparisons,
+                step.swaps,
+                step.writes
+            )
         );
 
         keyLabel.setText(
             step.heldKey == null
-                ? "Held insertion key: —"
-                : "Held insertion key: " + step.heldKey +
-                  " (stored separately while values shift)"
+                ? "Held key / pivot: —"
+                : "Held key / pivot: " + step.heldKey +
+                  " (stored separately during sorting)"
         );
 
         boxes.getChildren().clear();
 
         for (int i = 0; i < step.values.length; i++) {
+
             String colour = "#1d4ed8";
 
             if (!hasNext()) {
                 colour = "#15803d";
-            } else if (i == step.firstIndex || i == step.secondIndex) {
+            } else if (
+                i == step.firstIndex ||
+                i == step.secondIndex
+            ) {
                 colour = "#c2410c";
             }
 
-            Label value = new Label(Integer.toString(step.values[i]));
+            Label value = new Label(
+                Integer.toString(step.values[i])
+            );
+
             value.setAlignment(Pos.CENTER);
             value.setMinSize(65, 50);
             value.setPadding(new Insets(10));
-            value.getStyleClass().addAll("value-box", !hasNext() ? "complete" : (i == step.firstIndex || i == step.secondIndex) ? "active-value" : "ordinary");
-            value.setAccessibleText("Index " + i + ", value " + step.values[i]);
 
-            VBox item = new VBox(5, value, Ui.label("index " + i + ((!hasNext()) ? " · sorted" : (i == step.firstIndex || i == step.secondIndex) ? " · active" : ""), "index-label"));
+            value.getStyleClass().addAll(
+                "value-box",
+                !hasNext()
+                    ? "complete"
+                    : (i == step.firstIndex ||
+                       i == step.secondIndex)
+                        ? "active-value"
+                        : "ordinary"
+            );
+
+            value.setAccessibleText(
+                "Index " + i + ", value " + step.values[i]
+            );
+
+            VBox item = new VBox(
+                5,
+                value,
+                Ui.label(
+                    "index " + i +
+                    ((!hasNext())
+                        ? " · sorted"
+                        : (i == step.firstIndex ||
+                           i == step.secondIndex)
+                            ? " · active"
+                            : ""),
+                    "index-label"
+                )
+            );
+
             item.setAlignment(Pos.CENTER);
             boxes.getChildren().add(item);
         }
@@ -434,26 +569,41 @@ public class SortingView extends VBox {
 
     private void resetResults() {
         stats.clear();
+
         progress.setProgress(0);
+
         stopPlayback();
+
         currentTrace = null;
         currentStep = 0;
 
         Ui.status(status, "neutral");
-        status.setText("Choose an algorithm, enter numbers and run.");
+
+        status.setText(
+            "Choose an algorithm, enter numbers and run."
+        );
 
         output.setText("Final result: —");
         totals.setText("Full-run statistics: —");
         stepPosition.setText("No steps loaded");
-        description.setText("Recorded steps will appear here.");
-        stepMetrics.setText("Statistics at this step: —");
-        keyLabel.setText("Held insertion key: —");
+
+        description.setText(
+            "Recorded steps will appear here."
+        );
+
+        stepMetrics.setText(
+            "Statistics at this step: —"
+        );
+
+        keyLabel.setText("Held key / pivot: —");
+
         boxes.getChildren().clear();
 
         updateControls();
     }
 
     private int[] parseInput(String input) {
+
         if (input == null || input.trim().isEmpty()) {
             throw new IllegalArgumentException(
                 "Please enter at least one whole number."
@@ -471,9 +621,14 @@ public class SortingView extends VBox {
         int[] numbers = new int[parts.length];
 
         for (int i = 0; i < parts.length; i++) {
+
             try {
-                numbers[i] = Integer.parseInt(parts[i].trim());
+                numbers[i] = Integer.parseInt(
+                    parts[i].trim()
+                );
+
             } catch (NumberFormatException exception) {
+
                 throw new IllegalArgumentException(
                     "Item " + (i + 1) +
                     " must be a whole number between " +
