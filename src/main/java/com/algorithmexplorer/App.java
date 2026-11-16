@@ -1,6 +1,7 @@
 package com.algorithmexplorer;
 
 import java.io.IOException;
+
 import javafx.application.Application;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXMLLoader;
@@ -8,10 +9,17 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
+import javafx.stage.Stage;
 
 /** Shared shell with laboratory state retained for the current session. */
 public class App extends Application {
@@ -76,7 +84,7 @@ public class App extends Application {
     private Parent overview() {
         Button start=new Button("Explore sorting →"); Ui.primary(start); start.setOnAction(e -> show(1));
         VBox hero=new VBox(15,Ui.label("WELCOME TO YOUR ALGORITHM LAB", "eyebrow"),Ui.label("Make every step\nmake sense.","hero-title"),Ui.label("Turn your own inputs into a visual journey. Follow each operation, inspect the result and discover how the work grows.","hero-subtitle"),start); hero.getStyleClass().add("hero");
-        Ui.Stats stats=new Ui.Stats("SORTING ALGORITHMS","RECURSION EXAMPLES","DATA STRUCTURES"); stats.set("4","3","3");
+        Ui.Stats stats=new Ui.Stats("SORTING ALGORITHMS","RECURSION EXAMPLES","DATA STRUCTURES"); stats.set("5","3","3");
         String[] descriptions={"Compare, swap and watch your numbers find their order.","Follow calls and returns through the recursive call stack.","Explore last in, first out with push, pop and peek.","Follow first in, first out in a circular queue.","Insert, search and delete with our own linked nodes."};
         GridPane grid=new GridPane(); grid.setHgap(16); grid.setVgap(16);
         VBox[] cards=new VBox[5];

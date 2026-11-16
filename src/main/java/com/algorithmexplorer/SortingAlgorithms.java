@@ -1,3 +1,4 @@
+
 package com.algorithmexplorer;
 
 public class SortingAlgorithms {
@@ -12,7 +13,8 @@ public class SortingAlgorithms {
         if (!"Bubble Sort".equals(algorithm)
                 && !"Selection Sort".equals(algorithm)
                 && !"Insertion Sort".equals(algorithm)
-                && !"Merge Sort".equals(algorithm)) {
+                && !"Merge Sort".equals(algorithm)
+                && !"Quick Sort".equals(algorithm)) {
             throw new IllegalArgumentException("Choose a valid algorithm.");
         }
 
@@ -44,6 +46,12 @@ public class SortingAlgorithms {
             case "Merge Sort":
                 mergeSort(
                     numbers, temporary, 0, numbers.length - 1, trace
+                );
+                break;
+
+            case "Quick Sort":
+                quickSort(
+                    numbers, 0, numbers.length - 1, trace
                 );
                 break;
 
@@ -344,6 +352,95 @@ public class SortingAlgorithms {
                 index, -1, null
             );
         }
+    }
+
+    // QUICK SORT
+    private static void quickSort(
+            int[] numbers,
+            int low,
+            int high,
+            SortTrace trace) {
+
+        if (low < high) {
+
+            int pivotIndex = partition(
+                numbers, low, high, trace
+            );
+
+            quickSort(
+                numbers, low, pivotIndex - 1, trace
+            );
+
+            quickSort(
+                numbers, pivotIndex + 1, high, trace
+            );
+        }
+    }
+
+    // PARTITION METHOD
+    private static int partition(
+            int[] numbers,
+            int low,
+            int high,
+            SortTrace trace) {
+
+        int pivot = numbers[high];
+
+        int i = low - 1;
+
+        trace.record(
+            numbers,
+            "Choose " + pivot + " as the pivot (last element).",
+            high, -1, pivot
+        );
+
+        for (int j = low; j < high; j++) {
+
+            trace.countComparison();
+
+            trace.record(
+                numbers,
+                "Compare " + numbers[j] + " with pivot " + pivot + ".",
+                j, high, pivot
+            );
+
+            if (numbers[j] < pivot) {
+
+                i++;
+
+                if (i != j) {
+                    int temporary = numbers[i];
+                    numbers[i] = numbers[j];
+                    numbers[j] = temporary;
+
+                    trace.countSwap();
+                }
+
+                trace.record(
+                    numbers,
+                    "Move the smaller value " + numbers[i] +
+                    " to the left of the pivot.",
+                    i, j, pivot
+                );
+            }
+        }
+
+        int temporary = numbers[i + 1];
+        numbers[i + 1] = numbers[high];
+        numbers[high] = temporary;
+
+        if (i + 1 != high) {
+            trace.countSwap();
+        }
+
+        trace.record(
+            numbers,
+            "Place pivot " + pivot +
+            " in its correct position at index " + (i + 1) + ".",
+            i + 1, high, null
+        );
+
+        return i + 1;
     }
 
     private static String formatRange(int[] values, int start, int end) {
