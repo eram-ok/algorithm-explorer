@@ -16,6 +16,7 @@ steps, and explore operation counts, execution times and algorithm complexity.
 | Nyamwenge Bernadette | S23B23/049 |
 | Aruho Bob | S24B23/115 |
 | Atuhaire Sheenah | S25B23/072 |
+| Amutuhaire Lincoln | S25B23/109 |
 
 ## Install on Windows
 
