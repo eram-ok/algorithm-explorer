@@ -1,20 +1,18 @@
-
 package com.algorithmexplorer;
 
 public class SortingAlgorithms {
 
     public static SortTrace run(String algorithm, int[] input) {
         if (input == null || input.length < 1 || input.length > 50) {
-            throw new IllegalArgumentException(
-                "Enter between 1 and 50 numbers."
-            );
+            throw new IllegalArgumentException("Enter between 1 and 50 numbers.");
         }
 
         if (!"Bubble Sort".equals(algorithm)
                 && !"Selection Sort".equals(algorithm)
                 && !"Insertion Sort".equals(algorithm)
                 && !"Merge Sort".equals(algorithm)
-                && !"Quick Sort".equals(algorithm)) {
+                && !"Quick Sort".equals(algorithm)
+                && !"Heap Sort".equals(algorithm)) {
             throw new IllegalArgumentException("Choose a valid algorithm.");
         }
 
@@ -22,85 +20,57 @@ public class SortingAlgorithms {
         SortTrace trace = new SortTrace(numbers.length);
 
         // Allocate the merge buffer before timing starts.
-        int[] temporary = "Merge Sort".equals(algorithm)
-            ? new int[numbers.length]
-            : null;
-
+        int[] temporary = "Merge Sort".equals(algorithm) ? new int[numbers.length] : null;
         trace.record(numbers, "Initial array.", -1, -1, null);
 
         long start = System.nanoTime();
-
         switch (algorithm) {
             case "Bubble Sort":
                 bubbleSort(numbers, trace);
                 break;
-
             case "Selection Sort":
                 selectionSort(numbers, trace);
                 break;
-
             case "Insertion Sort":
                 insertionSort(numbers, trace);
                 break;
-
             case "Merge Sort":
-                mergeSort(
-                    numbers, temporary, 0, numbers.length - 1, trace
-                );
+                mergeSort(numbers, temporary, 0, numbers.length - 1, trace);
                 break;
-
             case "Quick Sort":
-                quickSort(
-                    numbers, 0, numbers.length - 1, trace
-                );
+                quickSort(numbers, 0, numbers.length - 1, trace);
                 break;
-
+            case "Heap Sort":
+                heapSort(numbers, trace);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown algorithm.");
         }
-
         trace.setElapsedNanoseconds(System.nanoTime() - start);
-
-        trace.record(
-            numbers,
-            "Complete. All numbers are in ascending order.",
-            -1, -1, null
-        );
-
+        trace.record(numbers, "Complete. All numbers are in ascending order.", -1, -1, null);
         return trace;
     }
 
     private static void bubbleSort(int[] numbers, SortTrace trace) {
         for (int pass = 0; pass < numbers.length - 1; pass++) {
             boolean swapped = false;
-
             for (int j = 0; j < numbers.length - 1 - pass; j++) {
                 int left = numbers[j];
                 int right = numbers[j + 1];
-
                 trace.countComparison();
-
-                String explanation =
-                    "Pass " + (pass + 1) +
-                    ": compare " + left + " and " + right + ". ";
-
+                String explanation = "Pass " + (pass + 1) + ": compare " + left + " and " + right + ". ";
                 if (left > right) {
                     int temporary = numbers[j];
                     numbers[j] = numbers[j + 1];
                     numbers[j + 1] = temporary;
-
                     trace.countSwap();
                     swapped = true;
                     explanation += "Swap them.";
                 } else {
                     explanation += "No swap needed.";
                 }
-
-                trace.record(
-                    numbers, explanation, j, j + 1, null
-                );
+                trace.record(numbers, explanation, j, j + 1, null);
             }
-
             if (!swapped) {
                 break;
             }
@@ -108,56 +78,33 @@ public class SortingAlgorithms {
     }
 
     private static void selectionSort(int[] numbers, SortTrace trace) {
-        for (int position = 0;
-                position < numbers.length - 1;
-                position++) {
-
+        for (int position = 0; position < numbers.length - 1; position++) {
             int minimum = position;
-
-            for (int candidate = position + 1;
-                    candidate < numbers.length;
-                    candidate++) {
-
+            for (int candidate = position + 1; candidate < numbers.length; candidate++) {
                 int oldMinimum = minimum;
                 trace.countComparison();
-
-                String explanation =
-                    "Compare candidate " + numbers[candidate] +
-                    " with current minimum " + numbers[minimum] + ". ";
-
+                String explanation = "Compare candidate " + numbers[candidate]
+                        + " with current minimum " + numbers[minimum] + ". ";
                 if (numbers[candidate] < numbers[minimum]) {
                     minimum = candidate;
                     explanation += "The candidate is the new minimum.";
                 } else {
                     explanation += "Keep the current minimum.";
                 }
-
-                trace.record(
-                    numbers, explanation, oldMinimum, candidate, null
-                );
+                trace.record(numbers, explanation, oldMinimum, candidate, null);
             }
 
             String explanation;
-
             if (minimum != position) {
                 int temporary = numbers[position];
                 numbers[position] = numbers[minimum];
                 numbers[minimum] = temporary;
-
                 trace.countSwap();
-
-                explanation =
-                    "Swap the minimum into index " + position +
-                    ". This position is now sorted.";
+                explanation = "Swap the minimum into index " + position + ". This position is now sorted.";
             } else {
-                explanation =
-                    "The minimum is already at index " + position +
-                    ". No swap is needed.";
+                explanation = "The minimum is already at index " + position + ". No swap is needed.";
             }
-
-            trace.record(
-                numbers, explanation, position, minimum, null
-            );
+            trace.record(numbers, explanation, position, minimum, null);
         }
     }
 
@@ -165,27 +112,25 @@ public class SortingAlgorithms {
         for (int i = 1; i < numbers.length; i++) {
             int key = numbers[i];
             int j = i - 1;
-
             trace.record(
-                numbers,
-                "Hold " + key + " as the key. Insert it into the " +
-                "sorted portion to its left.",
-                i, -1, key
+                    numbers,
+                    "Hold " + key + " as the key. Insert it into the sorted portion to its left.",
+                    i,
+                    -1,
+                    key
             );
 
             while (j >= 0) {
                 trace.countComparison();
                 boolean move = numbers[j] > key;
-
                 trace.record(
-                    numbers,
-                    "Compare " + numbers[j] + " with held key " + key +
-                    (move
-                        ? ". This value is larger, so shift it right."
-                        : ". It is not larger, so stop searching left."),
-                    j, -1, key
+                        numbers,
+                        "Compare " + numbers[j] + " with held key " + key
+                                + (move ? ". This value is larger, so shift it right." : ". It is not larger, so stop searching left."),
+                        j,
+                        -1,
+                        key
                 );
-
                 if (!move) {
                     break;
                 }
@@ -193,75 +138,56 @@ public class SortingAlgorithms {
                 int shiftedValue = numbers[j];
                 numbers[j + 1] = numbers[j];
                 trace.countWrite();
-
                 trace.record(
-                    numbers,
-                    "Shift " + shiftedValue + " from index " + j +
-                    " to index " + (j + 1) +
-                    ". The key is still held separately.",
-                    j, j + 1, key
+                        numbers,
+                        "Shift " + shiftedValue + " from index " + j + " to index " + (j + 1) + ". The key is still held separately.",
+                        j,
+                        j + 1,
+                        key
                 );
-
                 j--;
             }
 
             numbers[j + 1] = key;
             trace.countWrite();
-
             trace.record(
-                numbers,
-                "Write key " + key + " into index " + (j + 1) +
-                ". Indexes 0 through " + i + " are now sorted.",
-                j + 1, -1, null
+                    numbers,
+                    "Write key " + key + " into index " + (j + 1) + ". Indexes 0 through " + i + " are now sorted.",
+                    j + 1,
+                    -1,
+                    null
             );
         }
     }
 
-    private static void mergeSort(
-            int[] numbers,
-            int[] temporary,
-            int left,
-            int right,
-            SortTrace trace) {
-
+    private static void mergeSort(int[] numbers, int[] temporary, int left, int right, SortTrace trace) {
         // Base case: one element is already sorted.
         if (left >= right) {
             return;
         }
 
         int middle = left + (right - left) / 2;
-
         trace.record(
-            numbers,
-            "Split indexes " + left + ".." + right +
-            " into " + left + ".." + middle +
-            " and " + (middle + 1) + ".." + right + ".",
-            left, right, null
+                numbers,
+                "Split indexes " + left + ".." + right + " into " + left + ".." + middle + " and " + (middle + 1) + ".." + right + ".",
+                left,
+                right,
+                null
         );
 
         mergeSort(numbers, temporary, left, middle, trace);
         mergeSort(numbers, temporary, middle + 1, right, trace);
-
         merge(numbers, temporary, left, middle, right, trace);
     }
 
-    private static void merge(
-            int[] numbers,
-            int[] temporary,
-            int left,
-            int middle,
-            int right,
-            SortTrace trace) {
-
+    private static void merge(int[] numbers, int[] temporary, int left, int middle, int right, SortTrace trace) {
         int first = left;
         int second = middle + 1;
         int destination = left;
 
         while (first <= middle && second <= right) {
             trace.countComparison();
-
             int chosenIndex;
-
             // Choose the left value on equality to preserve stability.
             if (numbers[first] <= numbers[second]) {
                 chosenIndex = first;
@@ -270,32 +196,27 @@ public class SortingAlgorithms {
             }
 
             trace.record(
-                numbers,
-                "Merge indexes " + left + ".." + right +
-                ": compare " + numbers[first] +
-                " and " + numbers[second] +
-                ". Choose " + numbers[chosenIndex] +
-                (numbers[first] == numbers[second]
-                    ? " from the left half because the values are equal."
-                    : "."),
-                first, second, null
+                    numbers,
+                    "Merge indexes " + left + ".." + right + ": compare " + numbers[first] + " and " + numbers[second]
+                            + ". Choose " + numbers[chosenIndex]
+                            + (numbers[first] == numbers[second] ? " from the left half because the values are equal." : "."),
+                    first,
+                    second,
+                    null
             );
 
             temporary[destination] = numbers[chosenIndex];
             trace.countWrite();
-
             trace.record(
-                numbers,
-                "Write " + numbers[chosenIndex] +
-                " into temporary[" + destination + "]. " +
-                "Temporary segment so far: " +
-                formatRange(temporary, left, destination) +
-                ". Main-array boxes are unchanged.",
-                chosenIndex, -1, null
+                    numbers,
+                    "Write " + numbers[chosenIndex] + " into temporary[" + destination + "]. "
+                            + "Temporary segment so far: " + formatRange(temporary, left, destination) + ". Main-array boxes are unchanged.",
+                    chosenIndex,
+                    -1,
+                    null
             );
 
             destination++;
-
             if (chosenIndex == first) {
                 first++;
             } else {
@@ -306,17 +227,14 @@ public class SortingAlgorithms {
         while (first <= middle) {
             temporary[destination] = numbers[first];
             trace.countWrite();
-
             trace.record(
-                numbers,
-                "Right half exhausted. Copy " + numbers[first] +
-                " into temporary[" + destination + "]. " +
-                "Temporary segment so far: " +
-                formatRange(temporary, left, destination) +
-                ". No value comparison is needed.",
-                first, -1, null
+                    numbers,
+                    "Right half exhausted. Copy " + numbers[first] + " into temporary[" + destination + "]. "
+                            + "Temporary segment so far: " + formatRange(temporary, left, destination) + ". No value comparison is needed.",
+                    first,
+                    -1,
+                    null
             );
-
             first++;
             destination++;
         }
@@ -324,17 +242,14 @@ public class SortingAlgorithms {
         while (second <= right) {
             temporary[destination] = numbers[second];
             trace.countWrite();
-
             trace.record(
-                numbers,
-                "Left half exhausted. Copy " + numbers[second] +
-                " into temporary[" + destination + "]. " +
-                "Temporary segment so far: " +
-                formatRange(temporary, left, destination) +
-                ". No value comparison is needed.",
-                second, -1, null
+                    numbers,
+                    "Left half exhausted. Copy " + numbers[second] + " into temporary[" + destination + "]. "
+                            + "Temporary segment so far: " + formatRange(temporary, left, destination) + ". No value comparison is needed.",
+                    second,
+                    -1,
+                    null
             );
-
             second++;
             destination++;
         }
@@ -342,118 +257,118 @@ public class SortingAlgorithms {
         for (int index = left; index <= right; index++) {
             numbers[index] = temporary[index];
             trace.countWrite();
-
             trace.record(
-                numbers,
-                "Copy temporary[" + index + "] = " + temporary[index] +
-                " back into main-array index " + index +
-                ". The merged segment is " +
-                formatRange(temporary, left, right) + ".",
-                index, -1, null
+                    numbers,
+                    "Copy temporary[" + index + "] = " + temporary[index] + " back into main-array index " + index
+                            + ". The merged segment is " + formatRange(temporary, left, right) + ".",
+                    index,
+                    -1,
+                    null
             );
         }
     }
 
     // QUICK SORT
-    private static void quickSort(
-            int[] numbers,
-            int low,
-            int high,
-            SortTrace trace) {
-
+    private static void quickSort(int[] numbers, int low, int high, SortTrace trace) {
         if (low < high) {
-
-            int pivotIndex = partition(
-                numbers, low, high, trace
-            );
-
-            quickSort(
-                numbers, low, pivotIndex - 1, trace
-            );
-
-            quickSort(
-                numbers, pivotIndex + 1, high, trace
-            );
+            int pivotIndex = partition(numbers, low, high, trace);
+            quickSort(numbers, low, pivotIndex - 1, trace);
+            quickSort(numbers, pivotIndex + 1, high, trace);
         }
     }
 
     // PARTITION METHOD
-    private static int partition(
-            int[] numbers,
-            int low,
-            int high,
-            SortTrace trace) {
-
+    private static int partition(int[] numbers, int low, int high, SortTrace trace) {
         int pivot = numbers[high];
-
         int i = low - 1;
-
-        trace.record(
-            numbers,
-            "Choose " + pivot + " as the pivot (last element).",
-            high, -1, pivot
-        );
+        trace.record(numbers, "Choose " + pivot + " as the pivot (last element).", high, -1, pivot);
 
         for (int j = low; j < high; j++) {
-
             trace.countComparison();
-
-            trace.record(
-                numbers,
-                "Compare " + numbers[j] + " with pivot " + pivot + ".",
-                j, high, pivot
-            );
-
+            trace.record(numbers, "Compare " + numbers[j] + " with pivot " + pivot + ".", j, high, pivot);
             if (numbers[j] < pivot) {
-
                 i++;
-
                 if (i != j) {
                     int temporary = numbers[i];
                     numbers[i] = numbers[j];
                     numbers[j] = temporary;
-
                     trace.countSwap();
                 }
-
-                trace.record(
-                    numbers,
-                    "Move the smaller value " + numbers[i] +
-                    " to the left of the pivot.",
-                    i, j, pivot
-                );
+                trace.record(numbers, "Move the smaller value " + numbers[i] + " to the left of the pivot.", i, j, pivot);
             }
         }
 
         int temporary = numbers[i + 1];
         numbers[i + 1] = numbers[high];
         numbers[high] = temporary;
-
         if (i + 1 != high) {
             trace.countSwap();
         }
-
-        trace.record(
-            numbers,
-            "Place pivot " + pivot +
-            " in its correct position at index " + (i + 1) + ".",
-            i + 1, high, null
-        );
-
+        trace.record(numbers, "Place pivot " + pivot + " in its correct position at index " + (i + 1) + ".", i + 1, high, null);
         return i + 1;
+    }
+
+    // HEAP SORT
+    private static void heapSort(int[] numbers, SortTrace trace) {
+        int n = numbers.length;
+
+        // Build max heap
+        for (int i = n / 2 - 1; i >= 0; i--) {
+            heapify(numbers, n, i, trace);
+        }
+
+        // Extract elements from heap one by one
+        for (int i = n - 1; i > 0; i--) {
+            int temp = numbers[0];
+            numbers[0] = numbers[i];
+            numbers[i] = temp;
+            trace.countSwap();
+            trace.record(numbers, "Swap root (max element " + temp + ") with element at index " + i + ".", 0, i, null);
+
+            heapify(numbers, i, 0, trace);
+        }
+    }
+
+    private static void heapify(int[] numbers, int n, int i, SortTrace trace) {
+        int largest = i;
+        int left = 2 * i + 1;
+        int right = 2 * i + 2;
+
+        if (left < n) {
+            trace.countComparison();
+            trace.record(numbers, "Compare left child " + numbers[left] + " with parent/largest " + numbers[largest] + ".", left, largest, null);
+            if (numbers[left] > numbers[largest]) {
+                largest = left;
+            }
+        }
+
+        if (right < n) {
+            trace.countComparison();
+            trace.record(numbers, "Compare right child " + numbers[right] + " with current largest " + numbers[largest] + ".", right, largest, null);
+            if (numbers[right] > numbers[largest]) {
+                largest = right;
+            }
+        }
+
+        if (largest != i) {
+            int swap = numbers[i];
+            numbers[i] = numbers[largest];
+            numbers[largest] = swap;
+            trace.countSwap();
+            trace.record(numbers, "Swap index " + i + " and index " + largest + " to maintain max-heap property.", i, largest, null);
+
+            heapify(numbers, n, largest, trace);
+        }
     }
 
     private static String formatRange(int[] values, int start, int end) {
         StringBuilder text = new StringBuilder("[");
-
         for (int i = start; i <= end; i++) {
             if (i > start) {
                 text.append(", ");
             }
-
             text.append(values[i]);
         }
-
         return text.append("]").toString();
     }
 }
